@@ -272,63 +272,79 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    // ❗新版：用 12 個特徵一起算分數，平均後再轉成 Best~Fail
+    // ⭐ 新版 esp：IAP / SH / ATD 為主，TNP / TWP 為輔，其它小影響
     function calcEsp(rec) {
-        // 0 = 最差，4 = 最好
-        const scoreMaps = {
-            tnp:   { "Best":4, "Very Good":3, "Good":2, "Pass":1, "Fail":0 },
-            twp:   { "Best":4, "Very Good":3, "Good":2, "Pass":1, "Fail":0 },
-            iap:   { "Best":4, "Very Good":3, "Good":2, "Pass":1, "Fail":0 },
-
-            // 重修：有重修扣分，沒重修給 2 分
-            arr:   { "N":2, "Y":0 },
-
-            // 入學類型：Free 稍微好一點
-            asCat: { "Free":2, "Paid":1 },
-
-            // 讀書時間
-            sh:    { "Good":2, "Average":1, "Poor":0 },
-
-            // 授課語言：Eng 稍好，其它普通
-            me:    { "Eng":2, "Asm":1, "Hin":1, "Ben":1 },
-
-            // 家庭人數：Small/Average 都 ok
-            fs:    { "Small":2, "Average":2, "Large":1 },
-
-            // 朋友數量：Average 最好、Large 次之、Small 比較弱
-            nf:    { "Average":2, "Large":1, "Small":0 },
-
-            // 出席率：Good > Average > Poor
-            atd:   { "Good":2, "Average":1, "Poor":0 },
-
-            // 父親職業：Service/Business 稍好
-            fo:    { "Service":2, "Business":2, "Retired":1, "Farmer":1, "Others":1 },
-
-            // 家庭收入
-            fmi:   { "Very High":2, "High":2, "Above Medium":1, "Medium":1, "Low":0 }
+        // 共用：成績等級 0~4
+        const gradeMajor = {
+            "Best":      4,
+            "Very Good": 3,
+            "Good":      2,
+            "Pass":      1,
+            "Fail":      0
         };
-
-        const scores = [];
-        Object.keys(scoreMaps).forEach(key => {
+    
+        // ────────────── 1. 主力：IAP + SH + ATD ──────────────
+        // IAP 用成績映射，SH / ATD 自訂 0~4
+        const shMap = { "Good": 4, "Average": 2.5, "Poor": 0 };
+        const atdMap = { "Good": 4, "Average": 2.5, "Poor": 0 };
+    
+        const majorScores = [];
+    
+        if (rec.iap && gradeMajor[rec.iap] != null) majorScores.push(gradeMajor[rec.iap]);
+        if (rec.sh  && shMap[rec.sh]          != null) majorScores.push(shMap[rec.sh]);
+        if (rec.atd && atdMap[rec.atd]        != null) majorScores.push(atdMap[rec.atd]);
+    
+        let majorAvg = majorScores.length
+            ? majorScores.reduce((a, b) => a + b, 0) / majorScores.length
+            : 2; // 都沒填，給一個中間值
+    
+        // ────────────── 2. 次要：TNP + TWP ──────────────
+        const secondaryScores = [];
+        if (rec.tnp && gradeMajor[rec.tnp] != null) secondaryScores.push(gradeMajor[rec.tnp]);
+        if (rec.twp && gradeMajor[rec.twp] != null) secondaryScores.push(gradeMajor[rec.twp]);
+    
+        let secondaryAvg = secondaryScores.length
+            ? secondaryScores.reduce((a, b) => a + b, 0) / secondaryScores.length
+            : 2;
+    
+        // ────────────── 3. 其他七個小影響特徵 ──────────────
+        // 映射到 0~4，但權重會很小
+        const otherMaps = {
+            arr:   { "N": 4, "Y": 1 },                             // 沒重修較好
+            asCat: { "Free": 3, "Paid": 2 },                       // 公費略好
+            me:    { "Eng": 3, "Asm": 2, "Hin": 2, "Ben": 2 },     // 英文稍好
+            fs:    { "Small": 3, "Average": 2, "Large": 1 },
+            nf:    { "Average": 3, "Large": 2, "Small": 1 },
+            fo:    { "Service": 3, "Business": 3, "Retired": 2, "Farmer": 2, "Others": 2 },
+            fmi:   { "Very High": 4, "High": 3.5, "Above Medium": 3,
+                     "Medium": 2.5, "Low": 1 }
+        };
+    
+        const otherScores = [];
+        for (const key in otherMaps) {
             const v = rec[key];
-            const m = scoreMaps[key];
-            if (v && m && m[v] != null) {
-                scores.push(m[v]);
+            const map = otherMaps[key];
+            if (v && map && map[v] != null) {
+                otherScores.push(map[v]);
             }
-        });
-
-        if (scores.length === 0) return "";
-
-        const sum = scores.reduce((a, b) => a + b, 0);
-        const avg = sum / scores.length;
-
-        // ➜ 門檻調整：平均越低等級越差
-        if (avg >= 3.5) return "Best";
-        if (avg >= 2.5) return "Very Good";
-        if (avg >= 1.5) return "Good";
-        if (avg >= 0.5) return "Pass";
+        }
+    
+        let otherAvg = otherScores.length
+            ? otherScores.reduce((a, b) => a + b, 0) / otherScores.length  // 0~4
+            : 2; // 沒填就給中間值
+    
+        // ────────────── 4. 加權合成總分 (0~4) ──────────────
+        // 主力 60% + 次要 25% + 其他 15%
+        const score = 0.6 * majorAvg + 0.25 * secondaryAvg + 0.15 * otherAvg;
+    
+        // ────────────── 5. 依總分決定等級 ──────────────
+        if (score >= 3.3) return "Best";
+        if (score >= 2.6) return "Very Good";
+        if (score >= 1.9) return "Good";
+        if (score >= 1.1) return "Pass";
         return "Fail";
     }
+
 
     let data = loadData();
 
@@ -377,3 +393,4 @@
 
 </body>
 </html>
+
