@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>學生學習表現調查表</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+            background-color: #f5f5f7;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4877c4;
+            color: #fff;
+            padding: 16px 24px;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+        main {
+            max-width: 900px;
+            margin: 24px auto;
+            padding: 0 16px 32px;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .card h2 {
+            margin-top: 0;
+            font-size: 18px;
+            border-left: 4px solid #4877c4;
+            padding-left: 8px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px 24px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .form-group span.hint {
+            font-size: 12px;
+            color: #777;
+        }
+        select {
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        .actions {
+            margin-top: 16px;
+        }
+        .btn {
+            display: inline-block;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #4877c4;
+            color: #fff;
+        }
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .link-admin {
+            margin-top: 12px;
+            font-size: 14px;
+        }
+        .link-admin a {
+            color: #4877c4;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>學生學習表現調查表</h1>
+</header>
+
+<main>
+    <section class="card">
+        <h2>請學生填寫以下資訊</h2>
+        <p style="font-size:14px; color:#555;">
+            選項已附上簡單中文說明。為了分析方便，<b>請至少選擇 IAP 等級</b>。<br>
+            後台會根據 12 個特徵，自動推一個 <b>esp</b> 成績等級。
+        </p>
+        <form id="surveyForm">
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="tnp">TNP – 十年級成績等級</label>
+                    <select id="tnp">
+                        <option value="">請選擇</option>
+                        <option value="Best">Best（最佳）</option>
+                        <option value="Very Good">Very Good（很好）</option>
+                        <option value="Good">Good（普通）</option>
+                        <option value="Pass">Pass（及格）</option>
+                        <option value="Fail">Fail（不及格）</option>
+                    </select>
+                    <span class="hint">≥80 Best、60–79 Very Good、45–59 Good、30–44 Pass、&lt;30 Fail</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="twp">TWP – 十二年級成績等級</label>
+                    <select id="twp">
+                        <option value="">請選擇</option>
+                        <option value="Best">Best（最佳）</option>
+                        <option value="Very Good">Very Good（很好）</option>
+                        <option value="Good">Good（普通）</option>
+                        <option value="Pass">Pass（及格）</option>
+                        <option value="Fail">Fail（不及格）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="iap">IAP – 內部評量成績等級 <span style="color:#d32f2f;">＊必填</span></label>
+                    <select id="iap" required>
+                        <option value="">請選擇</option>
+                        <option value="Best">Best（最佳）</option>
+                        <option value="Very Good">Very Good（很好）</option>
+                        <option value="Good">Good（普通）</option>
+                        <option value="Pass">Pass（及格）</option>
+                        <option value="Fail">Fail（不及格）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="arr">ARR – 是否有重修科目</label>
+                    <select id="arr">
+                        <option value="">請選擇</option>
+                        <option value="Y">Yes（有）</option>
+                        <option value="N">No（沒有）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="asCat">AS – 入學類型</label>
+                    <select id="asCat">
+                        <option value="">請選擇</option>
+                        <option value="Free">Free（公費／免費）</option>
+                        <option value="Paid">Paid（自費）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="sh">SH – 讀書時間（每天）</label>
+                    <select id="sh">
+                        <option value="">請選擇</option>
+                        <option value="Good">Good（≥ 6 小時）</option>
+                        <option value="Average">Average（4–5 小時）</option>
+                        <option value="Poor">Poor（&lt; 2 小時）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="me">ME – 授課語言</label>
+                    <select id="me">
+                        <option value="">請選擇</option>
+                        <option value="Eng">English（英文）</option>
+                        <option value="Asm">Assamese（阿薩姆語）</option>
+                        <option value="Hin">Hindi（印地語）</option>
+                        <option value="Ben">Bengali（孟加拉語）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="fs">FS – 家庭人數</label>
+                    <select id="fs">
+                        <option value="">請選擇</option>
+                        <option value="Large">Large（大家庭 &gt; 12 人）</option>
+                        <option value="Average">Average（一般 6–12 人）</option>
+                        <option value="Small">Small（小家庭 &lt; 6 人）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="nf">NF – 朋友數量</label>
+                    <select id="nf">
+                        <option value="">請選擇</option>
+                        <option value="Large">Large（很多）</option>
+                        <option value="Average">Average（普通）</option>
+                        <option value="Small">Small（較少）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="atd">ATD – 出席率</label>
+                    <select id="atd">
+                        <option value="">請選擇</option>
+                        <option value="Good">Good（≥ 80%）</option>
+                        <option value="Average">Average（60–79%）</option>
+                        <option value="Poor">Poor（&lt; 60%）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="fo">FO – 父親職業</label>
+                    <select id="fo">
+                        <option value="">請選擇</option>
+                        <option value="Service">Service（受薪／上班族）</option>
+                        <option value="Business">Business（生意）</option>
+                        <option value="Retired">Retired（退休）</option>
+                        <option value="Farmer">Farmer（農業）</option>
+                        <option value="Others">Others（其他）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="fmi">FMI – 家庭月收入</label>
+                    <select id="fmi">
+                        <option value="">請選擇</option>
+                        <option value="Very High">Very High（非常高）</option>
+                        <option value="High">High（高）</option>
+                        <option value="Above Medium">Above Medium（中上）</option>
+                        <option value="Medium">Medium（中等）</option>
+                        <option value="Low">Low（低）</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">送出資料</button>
+                <button type="reset" class="btn btn-secondary">清除表單</button>
+            </div>
+        </form>
+
+        <div class="link-admin">
+            管理者可前往：
+            <a href="student_admin.html">學生學習表現管理後台</a>
+        </div>
+    </section>
+</main>
+
+<script>
+(function () {
+    "use strict";
+
+    const STORAGE_KEY = "studentSurveyData";
+
+    function loadData() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            console.error("loadData parse error:", e);
+            return [];
+        }
+    }
+
+    function saveData(data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // ❗新版：用 12 個特徵一起算分數，平均後再轉成 Best~Fail
+    function calcEsp(rec) {
+        // 0 = 最差，4 = 最好
+        const scoreMaps = {
+            tnp:   { "Best":4, "Very Good":3, "Good":2, "Pass":1, "Fail":0 },
+            twp:   { "Best":4, "Very Good":3, "Good":2, "Pass":1, "Fail":0 },
+            iap:   { "Best":4, "Very Good":3, "Good":2, "Pass":1, "Fail":0 },
+
+            // 重修：有重修扣分，沒重修給 2 分
+            arr:   { "N":2, "Y":0 },
+
+            // 入學類型：Free 稍微好一點
+            asCat: { "Free":2, "Paid":1 },
+
+            // 讀書時間
+            sh:    { "Good":2, "Average":1, "Poor":0 },
+
+            // 授課語言：Eng 稍好，其它普通
+            me:    { "Eng":2, "Asm":1, "Hin":1, "Ben":1 },
+
+            // 家庭人數：Small/Average 都 ok
+            fs:    { "Small":2, "Average":2, "Large":1 },
+
+            // 朋友數量：Average 最好、Large 次之、Small 比較弱
+            nf:    { "Average":2, "Large":1, "Small":0 },
+
+            // 出席率：Good > Average > Poor
+            atd:   { "Good":2, "Average":1, "Poor":0 },
+
+            // 父親職業：Service/Business 稍好
+            fo:    { "Service":2, "Business":2, "Retired":1, "Farmer":1, "Others":1 },
+
+            // 家庭收入
+            fmi:   { "Very High":2, "High":2, "Above Medium":1, "Medium":1, "Low":0 }
+        };
+
+        const scores = [];
+        Object.keys(scoreMaps).forEach(key => {
+            const v = rec[key];
+            const m = scoreMaps[key];
+            if (v && m && m[v] != null) {
+                scores.push(m[v]);
+            }
+        });
+
+        if (scores.length === 0) return "";
+
+        const sum = scores.reduce((a, b) => a + b, 0);
+        const avg = sum / scores.length;
+
+        // ➜ 門檻調整：平均越低等級越差
+        if (avg >= 3.5) return "Best";
+        if (avg >= 2.5) return "Very Good";
+        if (avg >= 1.5) return "Good";
+        if (avg >= 0.5) return "Pass";
+        return "Fail";
+    }
+
+    let data = loadData();
+
+    function getFormData() {
+        const getValue = id => document.getElementById(id).value.trim();
+        const rec = {
+            id: "r_" + Date.now().toString(36) + "_" + Math.random().toString(16).slice(2),
+            tnp: getValue("tnp"),
+            twp: getValue("twp"),
+            iap: getValue("iap"),
+            arr: getValue("arr"),
+            asCat: getValue("asCat"),
+            sh: getValue("sh"),
+            me: getValue("me"),
+            fs: getValue("fs"),
+            nf: getValue("nf"),
+            atd: getValue("atd"),
+            fo: getValue("fo"),
+            fmi: getValue("fmi"),
+            createdAt: new Date().toISOString()
+        };
+        rec.esp = calcEsp(rec);   // ✅ 改成 esp
+        return rec;
+    }
+
+    function validateForm(d) {
+        if (!d.iap) {
+            alert("請至少選擇 IAP 等級。");
+            return false;
+        }
+        return true;
+    }
+
+    document.getElementById("surveyForm").addEventListener("submit", function (evt) {
+        evt.preventDefault();
+        const formData = getFormData();
+        if (!validateForm(formData)) return;
+
+        data.push(formData);
+        saveData(data);
+        this.reset();
+        alert("資料已儲存，感謝填寫！");
+    });
+})();
+</script>
+
+</body>
+</html>

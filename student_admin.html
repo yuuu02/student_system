@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>學生學習表現管理後台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+            background-color: #f5f5f7;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: linear-gradient(90deg,#00796b,#26a69a);
+            color: #fff;
+            padding: 16px 24px;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+        main {
+            max-width: 1200px;
+            margin: 24px auto;
+            padding: 0 16px 32px;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .card h2 {
+            margin-top: 0;
+            font-size: 18px;
+            border-left: 4px solid #00796b;
+            padding-left: 8px;
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .filter-row select {
+            min-width: 220px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        .btn {
+            display: inline-block;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #00796b;
+            color: #fff;
+        }
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .btn-danger {
+            background-color: #e53935;
+            color: #fff;
+        }
+        .btn + .btn {
+            margin-left: 4px;
+        }
+        #levelOptions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        #levelOptions label {
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            border-bottom: 1px solid #eee;
+            padding: 6px 4px;
+            text-align: center;
+        }
+        th {
+            background-color: #fafafa;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        .empty-tip {
+            text-align: center;
+            color: #999;
+            padding: 16px 0;
+        }
+        .link-front {
+            margin-top: 8px;
+            font-size: 14px;
+        }
+        .link-front a {
+            color: #00796b;
+            text-decoration: none;
+        }
+
+        /* 讓圖表真正左右排列，不壓縮，並固定高度 */
+        /* 圖表區：桌機左右兩張，手機上下 */
+        #chartWrapper {
+            display: flex;
+            flex-wrap: wrap;          /* 小螢幕可以自動換行 */
+            gap: 16px;
+        }
+
+        /* 基本卡片樣式 */
+        .chart-box {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            box-sizing: border-box;
+            flex: 1 1 100%;           /* 預設先佔滿一列（給手機用） */
+        }
+
+        /* 桌機寬度 >= 900px 時，左右各半 */
+        @media (min-width: 900px) {
+            .chart-box {
+                flex: 0 0 calc(50% - 8px);   /* 兩張 + gap 剛好一排 */
+                max-width: calc(50% - 8px);
+            }
+        }
+
+        .chart-box h3 {
+            margin: 0 0 10px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* 固定兩個圖高度一致 */
+        .chart-box canvas {
+            width: 100% !important;
+            height: 340px !important;
+        }
+
+
+        /* 讓 canvas 固定高度，不被壓扁 */
+        .chart-box canvas {
+            width: 100% !important;
+            height: 340px !important;     /* 你可以自由調整 300~500 都很好看 */
+        }
+
+        /* 手機版改回上下排列 */
+        @media (max-width: 768px) {
+            #chartWrapper {
+                flex-wrap: wrap;
+            }
+            .chart-box {
+                min-width: 100%;
+            }
+        }
+
+
+        .btn-delete {
+            background-color: #ff7043;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>學生學習表現管理後台</h1>
+</header>
+
+<main>
+    <!-- 篩選與匯出 -->
+    <section class="card">
+        <h2>特徵篩選與匯出（CSV）</h2>
+
+        <div class="filter-row">
+            <label for="featureSelect" style="font-size:14px;">選擇特徵：</label>
+            <select id="featureSelect">
+                <option value="IAP">IAP – 內部評量成績</option>
+                <option value="TNP">TNP – 十年級成績</option>
+                <option value="TWP">TWP – 十二年級成績</option>
+                <option value="ARR">ARR – 是否重修</option>
+                <option value="AS">AS – 入學類型</option>
+                <option value="SH">SH – 讀書時間</option>
+                <option value="ME">ME – 授課語言</option>
+                <option value="FS">FS – 家庭人數</option>
+                <option value="NF">NF – 朋友數量</option>
+                <option value="ATD">ATD – 出席率</option>
+                <option value="FO">FO – 父親職業</option>
+                <option value="FMI">FMI – 家庭月收入</option>
+                <option value="ESP">ESP – 預測成績 esp(y)</option>
+            </select>
+        </div>
+
+        <div id="levelOptions"></div>
+
+        <div class="filter-row">
+            <button type="button" class="btn btn-secondary" id="btnClearFilter">清除篩選（顯示全部）</button>
+            <button type="button" class="btn btn-primary" id="btnExportCsv">匯出目前列表為 CSV</button>
+            <button type="button" class="btn btn-danger" id="btnClearAll">清空全部資料</button>
+        </div>
+
+        <p style="font-size:13px; color:#666;">
+            篩選邏輯：<br>
+            1) 先選特徵（例如 IAP），再勾選要保留的程度。<br>
+            2) 未勾任何程度 = 不篩選，顯示全部。<br>
+            3) 匯出 CSV 只包含目前表格中的資料。
+        </p>
+
+        <div class="link-front">
+            返回問卷填寫頁面：
+            <a href="student_survey.html">學生學習表現調查表</a>
+        </div>
+    </section>
+
+    <!-- 圖表 -->
+    <section class="card">
+        <h2>特徵分佈圖（長條圖＋圓餅圖）</h2>
+        <p style="font-size:13px; color:#666;">
+            圖表顯示的是：目前選定特徵，在<b>目前篩選後資料</b>中的分佈情形。
+        </p>
+
+        <div id="chartWrapper">
+            <div class="chart-box">
+                <h3>長條圖</h3>
+                <canvas id="featureBarChart"></canvas>
+            </div>
+
+            <div class="chart-box">
+                <h3>圓餅圖</h3>
+                <canvas id="featurePieChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- 表格 -->
+    <section class="card">
+        <h2>學生資料列表（12 特徵 + 預測 esp）</h2>
+        <div style="max-height: 450px; overflow:auto;">
+            <table>
+                <thead>
+                <tr>
+                    <th>TNP</th>
+                    <th>TWP</th>
+                    <th>IAP</th>
+                    <th>ARR</th>
+                    <th>AS</th>
+                    <th>SH</th>
+                    <th>ME</th>
+                    <th>FS</th>
+                    <th>NF</th>
+                    <th>ATD</th>
+                    <th>FO</th>
+                    <th>FMI</th>
+                    <th>ESP</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="studentTableBody"></tbody>
+            </table>
+            <div id="emptyTip" class="empty-tip" style="display:none;">
+                目前尚無任何學生資料。
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+(function () {
+    "use strict";
+
+    const STORAGE_KEY = "studentSurveyData";
+
+    // 特徵對應到物件裡的 key
+    const FIELD_KEY_MAP = {
+        TNP: "tnp",
+        TWP: "twp",
+        IAP: "iap",
+        ARR: "arr",
+        AS:  "asCat",
+        SH:  "sh",
+        ME:  "me",
+        FS:  "fs",
+        NF:  "nf",
+        ATD: "atd",
+        FO:  "fo",
+        FMI: "fmi",
+        ESP: "esp"        // ✅ 改成 esp
+    };
+
+    const FEATURE_CONFIG = {
+        TNP: { values: [
+            { value: "Best",       text: "Best（最佳）" },
+            { value: "Very Good",  text: "Very Good（很好）" },
+            { value: "Good",       text: "Good（普通）" },
+            { value: "Pass",       text: "Pass（及格）" },
+            { value: "Fail",       text: "Fail（不及格）" }
+        ]},
+        TWP: { values: [
+            { value: "Best",       text: "Best（最佳）" },
+            { value: "Very Good",  text: "Very Good（很好）" },
+            { value: "Good",       text: "Good（普通）" },
+            { value: "Pass",       text: "Pass（及格）" },
+            { value: "Fail",       text: "Fail（不及格）" }
+        ]},
+        IAP: { values: [
+            { value: "Best",       text: "Best（最佳）" },
+            { value: "Very Good",  text: "Very Good（很好）" },
+            { value: "Good",       text: "Good（普通）" },
+            { value: "Pass",       text: "Pass（及格）" },
+            { value: "Fail",       text: "Fail（不及格）" }
+        ]},
+        ARR: { values: [
+            { value: "Y",          text: "Y（有）" },
+            { value: "N",          text: "N（沒有）" }
+        ]},
+        AS: { values: [
+            { value: "Free",       text: "Free（公費／免費）" },
+            { value: "Paid",       text: "Paid（自費）" }
+        ]},
+        SH: { values: [
+            { value: "Good",       text: "Good（≥ 6 小時）" },
+            { value: "Average",    text: "Average（4–5 小時）" },
+            { value: "Poor",       text: "Poor（< 2 小時）" }
+        ]},
+        ME: { values: [
+            { value: "Eng",        text: "Eng（English 英文）" },
+            { value: "Asm",        text: "Asm（Assamese 阿薩姆語）" },
+            { value: "Hin",        text: "Hin（Hindi 印地語）" },
+            { value: "Ben",        text: "Ben（Bengali 孟加拉語）" }
+        ]},
+        FS: { values: [
+            { value: "Large",      text: "Large（> 12 人）" },
+            { value: "Average",    text: "Average（6–12 人）" },
+            { value: "Small",      text: "Small（< 6 人）" }
+        ]},
+        NF: { values: [
+            { value: "Large",      text: "Large（很多）" },
+            { value: "Average",    text: "Average（普通）" },
+            { value: "Small",      text: "Small（較少）" }
+        ]},
+        ATD: { values: [
+            { value: "Good",       text: "Good（≥ 80%）" },
+            { value: "Average",    text: "Average（60–79%）" },
+            { value: "Poor",       text: "Poor（< 60%）" }
+        ]},
+        FO: { values: [
+            { value: "Service",    text: "Service（受薪／上班族）" },
+            { value: "Business",   text: "Business（生意）" },
+            { value: "Retired",    text: "Retired（退休）" },
+            { value: "Farmer",     text: "Farmer（農業）" },
+            { value: "Others",     text: "Others（其他）" }
+        ]},
+        FMI: { values: [
+            { value: "Very High",  text: "Very High（非常高）" },
+            { value: "High",       text: "High（高）" },
+            { value: "Above Medium", text: "Above Medium（中上）" },
+            { value: "Medium",     text: "Medium（中等）" },
+            { value: "Low",        text: "Low（低）" }
+        ]},
+        ESP: { values: [
+            { value: "Best",       text: "Best（最佳）" },
+            { value: "Very Good",  text: "Very Good（很好）" },
+            { value: "Good",       text: "Good（普通）" },
+            { value: "Pass",       text: "Pass（及格）" },
+            { value: "Fail",       text: "Fail（不及格）" }
+        ]}
+    };
+
+    const PIE_COLORS = [
+        "#42a5f5", "#ef5350", "#ffca28", "#66bb6a",
+        "#26a69a", "#ab47bc", "#8d6e63", "#78909c"
+    ];
+    const BAR_COLOR  = "rgba(63,81,181,0.65)";
+    const BAR_BORDER = "rgba(63,81,181,1)";
+
+    function loadData() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            console.error("loadData parse error:", e);
+            return [];
+        }
+    }
+
+    function saveData(data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    let data = loadData();
+
+    // 舊資料若還是 espY，就轉成 esp
+    let dirty = false;
+    data.forEach((rec, idx) => {
+        if (!rec.id) {
+            rec.id = "r_" + Date.now().toString(36) + "_" + idx;
+            dirty = true;
+        }
+        if (rec.esp == null && rec.espY != null) {
+            rec.esp = rec.espY;
+            dirty = true;
+        }
+    });
+    if (dirty) saveData(data);
+
+    let currentFilteredData = data.slice();
+
+    const tbody = document.getElementById("studentTableBody");
+    const emptyTip = document.getElementById("emptyTip");
+    const featureSelect = document.getElementById("featureSelect");
+    const levelOptionsDiv = document.getElementById("levelOptions");
+
+    let featureBarChart = null;
+    let featurePieChart = null;
+
+    function renderLevelOptions(featureKey) {
+        const cfg = FEATURE_CONFIG[featureKey];
+        levelOptionsDiv.innerHTML = "";
+        if (!cfg || !cfg.values) return;
+
+        cfg.values.forEach(v => {
+            const id = "level_" + featureKey + "_" + v.value.replace(/\s+/g, "_");
+            const label = document.createElement("label");
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.name = "featureLevel";
+            cb.value = v.value;
+            cb.id = id;
+            cb.addEventListener("change", applyFilter);
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(" " + v.text));
+            levelOptionsDiv.appendChild(label);
+        });
+    }
+
+    function getSelectedLevels() {
+        const cbs = levelOptionsDiv.querySelectorAll("input[name='featureLevel']:checked");
+        return Array.from(cbs).map(cb => cb.value);
+    }
+
+    function deleteRecord(id) {
+        if (!confirm("確定要刪除此筆資料嗎？")) return;
+        data = data.filter(r => r.id !== id);
+        saveData(data);
+        applyFilter();
+    }
+
+    function renderTable(source) {
+        tbody.innerHTML = "";
+
+        if (!source || source.length === 0) {
+            emptyTip.style.display = "block";
+            return;
+        }
+        emptyTip.style.display = "none";
+
+        source.forEach(item => {
+            const tr = document.createElement("tr");
+
+            function tdText(text) {
+                const td = document.createElement("td");
+                td.textContent = text || "";
+                return td;
+            }
+
+            tr.appendChild(tdText(item.tnp));
+            tr.appendChild(tdText(item.twp));
+            tr.appendChild(tdText(item.iap));
+            tr.appendChild(tdText(item.arr));
+            tr.appendChild(tdText(item.asCat));
+            tr.appendChild(tdText(item.sh));
+            tr.appendChild(tdText(item.me));
+            tr.appendChild(tdText(item.fs));
+            tr.appendChild(tdText(item.nf));
+            tr.appendChild(tdText(item.atd));
+            tr.appendChild(tdText(item.fo));
+            tr.appendChild(tdText(item.fmi));
+            tr.appendChild(tdText(item.esp));   // ✅ 改成 esp
+
+            const tdAction = document.createElement("td");
+            const btnDel = document.createElement("button");
+            btnDel.type = "button";
+            btnDel.textContent = "刪除";
+            btnDel.className = "btn btn-delete";
+            btnDel.addEventListener("click", () => deleteRecord(item.id));
+            tdAction.appendChild(btnDel);
+            tr.appendChild(tdAction);
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function buildCsv(dataArr) {
+        const headers = [
+            "TNP","TWP","IAP","ARR","AS","SH","ME",
+            "FS","NF","ATD","FO","FMI","ESP"
+        ];
+        let csv = headers.join(",") + "\r\n";
+
+        dataArr.forEach(item => {
+            const rowValues = [
+                item.tnp,
+                item.twp,
+                item.iap,
+                item.arr,
+                item.asCat,
+                item.sh,
+                item.me,
+                item.fs,
+                item.nf,
+                item.atd,
+                item.fo,
+                item.fmi,
+                item.esp
+            ].map(v => {
+                if (v == null) return "\"\"";
+                const s = String(v).replace(/"/g, '""');
+                return `"${s}"`;
+            });
+            csv += rowValues.join(",") + "\r\n";
+        });
+
+        return csv;
+    }
+
+    function exportCsv() {
+        if (currentFilteredData.length === 0) {
+            alert("目前列表沒有資料可匯出。");
+            return;
+        }
+        const csv = buildCsv(currentFilteredData);
+        const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "student_survey.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function getDistribution(featureKey, source) {
+        const cfg = FEATURE_CONFIG[featureKey];
+        if (!cfg) return { labels: [], counts: [] };
+
+        const fieldKey = FIELD_KEY_MAP[featureKey];
+        const indexByValue = {};
+        const counts = new Array(cfg.values.length).fill(0);
+
+        cfg.values.forEach((v, idx) => {
+            indexByValue[v.value] = idx;
+        });
+
+        source.forEach(item => {
+            const v = item[fieldKey];
+            const idx = indexByValue[v];
+            if (idx !== undefined) {
+                counts[idx]++;
+            }
+        });
+
+        const labels = cfg.values.map(v => v.text);
+        return { labels, counts };
+    }
+
+    function updateCharts(featureKey, source) {
+        const ctxBar = document.getElementById("featureBarChart").getContext("2d");
+        const ctxPie = document.getElementById("featurePieChart").getContext("2d");
+
+        const dist = getDistribution(featureKey, source);
+
+        if (!featureBarChart) {
+            featureBarChart = new Chart(ctxBar, {
+                type: "bar",
+                data: {
+                    labels: dist.labels,
+                    datasets: [{
+                        label: "人數",
+                        data: dist.counts,
+                        backgroundColor: BAR_COLOR,
+                        borderColor: BAR_BORDER,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+        } else {
+            featureBarChart.data.labels = dist.labels;
+            featureBarChart.data.datasets[0].data = dist.counts;
+            featureBarChart.update();
+        }
+
+        if (!featurePieChart) {
+            featurePieChart = new Chart(ctxPie, {
+                type: "pie",
+                data: {
+                    labels: dist.labels,
+                    datasets: [{
+                        data: dist.counts,
+                        backgroundColor: PIE_COLORS.slice(0, dist.labels.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: "bottom",
+                            labels: {
+                                boxWidth: 14,
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            featurePieChart.data.labels = dist.labels;
+            featurePieChart.data.datasets[0].data = dist.counts;
+            featurePieChart.data.datasets[0].backgroundColor =
+                PIE_COLORS.slice(0, dist.labels.length);
+            featurePieChart.update();
+        }
+    }
+
+    function applyFilter() {
+        const featureKey = featureSelect.value;
+        const levels = getSelectedLevels();
+        const fieldKey = FIELD_KEY_MAP[featureKey];
+
+        let filtered = data;
+        if (levels.length > 0 && fieldKey) {
+            filtered = data.filter(item => levels.includes(item[fieldKey] || ""));
+        }
+
+        currentFilteredData = filtered;
+        renderTable(filtered);
+        updateCharts(featureKey, filtered);
+    }
+
+    function init() {
+        renderLevelOptions(featureSelect.value);
+        applyFilter();
+    }
+
+    featureSelect.addEventListener("change", function () {
+        renderLevelOptions(featureSelect.value);
+        applyFilter();
+    });
+
+    document.getElementById("btnClearFilter").addEventListener("click", function () {
+        levelOptionsDiv.querySelectorAll("input[name='featureLevel']")
+            .forEach(cb => cb.checked = false);
+        applyFilter();
+    });
+
+    document.getElementById("btnExportCsv").addEventListener("click", exportCsv);
+
+    document.getElementById("btnClearAll").addEventListener("click", function () {
+        if (!confirm("確定要清空全部資料嗎？此動作無法復原。")) return;
+        data = [];
+        currentFilteredData = [];
+        saveData(data);
+        renderTable([]);
+        updateCharts(featureSelect.value, []);
+    });
+
+    init();
+})();
+</script>
+
+</body>
+</html>
